@@ -7,8 +7,9 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+
+import java.awt.Rectangle;
 
 
 public class MainGame extends ApplicationAdapter {
@@ -18,37 +19,44 @@ public class MainGame extends ApplicationAdapter {
     Texture[] hero;
     Texture[] drake;
     Texture[] enemy;
+    Texture[] bee;
 
-    int heroState = 0;
-    int drakeState = 0;
-    int enemyState = 0;
+    int heroFrame = 0;
+    int drakeFrame = 0;
+    int enemyFrame = 0;
     int fireState = 0;
-    int gameStatus = 0;
-
+    int beeFrame = 0;
+    boolean gameStatus = false;
+    int slow = 0;
     int playerScore = 0;
 
-    float gravity = 0.3f;
+    float gravity = 0.4f;
     float velocity = 0;
     float enemyWidth;
     float enemyHeight;
     float heroWidth;
-    int heroHeight;
+    float heroHeight;
+    float beeWidth;
+    float beeHeight;
 
-    BitmapFont font;
+    BitmapFont font_score;
+    BitmapFont font_starter;
 
-    ShapeRenderer shapeRenderer;
     Rectangle enemyCollision;
-    Rectangle heroColission;
+    Rectangle beeColission;
+    Rectangle heroCollision;
 
     private Music music;
-    int slow = 0;
-
 
     @Override
     public void create () {
         batch = new SpriteBatch();
         background = new Texture("background1.png");
         music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
+
+       // heroCollision = new Rectangle(400, 200, , heroHeight);
+       // enemyCollision = new Rectangle(300, 300, enemyWidth, enemyHeight);
+       // beeColission = new Rectangle(350, 300, beeWidth, beeHeight);
 
         music.setLooping(true);
         music.setVolume(0.9f);
@@ -65,6 +73,14 @@ public class MainGame extends ApplicationAdapter {
         drake[1] = new Texture("frame-2_drake.png");
         drake[2] = new Texture("frame-3_drake.png");
         drake[3] = new Texture("frame-4_drake.png");
+
+        bee = new Texture[6];
+        bee[0] = new Texture("bee_1.png");
+        bee[1] = new Texture("bee_2.png");
+        bee[2] = new Texture("bee_3.png");
+        bee[3] = new Texture("bee_4.png");
+        bee[4] = new Texture("bee_5.png");
+        bee[5] = new Texture("bee_6.png");
 
         enemy = new Texture[43];
         enemy[0] = new Texture("og_000.png");
@@ -114,36 +130,66 @@ public class MainGame extends ApplicationAdapter {
         enemyWidth = Gdx.graphics.getWidth() / 10 + 2750;
         enemyHeight = Gdx.graphics.getHeight() / 10;
 
-        heroWidth = Gdx.graphics.getWidth() / 2 - hero[heroState].getWidth() / 2 - 450;
-        heroHeight = Gdx.graphics.getHeight() / 2 - 1500;
+        beeWidth = Gdx.graphics.getWidth() / 10 + 3500;
+        beeHeight = Gdx.graphics.getHeight() / 2;
 
-        shapeRenderer = new ShapeRenderer();
+        heroWidth = Gdx.graphics.getWidth() / 2 - hero[heroFrame].getWidth() / 2 - 450;
+        heroHeight = Gdx.graphics.getHeight() / 2 - 1500 + 80;
 
-        font = new BitmapFont();
-        font.setColor(Color.WHITE);
-        font.getData().setScale(15);
+        font_score = new BitmapFont();
+        font_score.setColor(Color.WHITE);
+        font_score.getData().setScale(10);
 
+        font_starter = new BitmapFont();
+        font_starter.setColor(Color.WHITE);
     }
 
 
     @Override
     public void render () {
+
         batch.begin();
         batch.draw(background,0,0,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 
-
-        if (gameStatus == 1) {
-
+        if (gameStatus == true) {
             if (Gdx.input.isTouched()) {
                 velocity = -11;
-                playerScore++;
             }
 
-            if (enemyWidth > -400) {
+            if (enemyWidth > -400 && playerScore < 1000) {
                 enemyWidth -= 10;
+            } else if (enemyWidth > -400 && playerScore >= 1000) {
+                enemyWidth -= 18;
             } else {
                 enemyWidth = Gdx.graphics.getWidth() / 10 + 2750;
-                playerScore += 100;
+
+                if (playerScore < 500) {
+                    playerScore += 100;
+                } else if (playerScore >= 500 && playerScore < 1500 ){
+                    playerScore += 200;
+                } else if (playerScore >= 1500 && playerScore < 5000){
+                    playerScore += 500;
+                } else {
+                    playerScore += 100;
+                }
+            }
+
+            if (beeWidth > -500 && playerScore < 1000) {
+                beeWidth -= 8;
+            } else if (beeWidth > -500 && playerScore >= 1000){
+                beeWidth -= 15;
+            } else  {
+                beeWidth = Gdx.graphics.getWidth() / 10 + 3500;
+
+                if (playerScore < 500) {
+                    playerScore += 100;
+                } else if (playerScore >= 500 && playerScore < 1500 ){
+                    playerScore += 200;
+                } else if (playerScore >= 1500 && playerScore < 5000){
+                    playerScore += 500;
+                } else {
+                    playerScore += 100;
+                }
             }
 
             if (slow < 8){
@@ -151,55 +197,58 @@ public class MainGame extends ApplicationAdapter {
             } else {
                 slow = 0;
 
-                if (heroState < 3) {
-                    heroState++;
+                if (heroFrame < 3) {
+                    heroFrame++;
                 } else {
-                    heroState = 0;
+                    heroFrame = 0;
                 }
 
-                if (drakeState < 3) {
-                    drakeState++;
+                if (drakeFrame < 3) {
+                    drakeFrame++;
                 } else {
-                    drakeState = 0;
+                    drakeFrame = 0;
                 }
 
+                if (beeFrame < 5) {
+                    beeFrame++;
+                } else {
+                    beeFrame = 0;
+                }
             }
-                if (enemyState < 42) {
-                    enemyState++;
+                if (enemyFrame < 42) {
+                    enemyFrame++;
                 } else {
-                    enemyState = 0;
-                }
-                
-                if (fireState < 2){
-                    fireState++;
-                } else {
-                    fireState = 0;
+                    enemyFrame = 0;
                 }
 
             velocity += gravity;
             heroHeight -= velocity;
 
+            if (heroHeight >= 800) {
+                heroHeight = 800;
+            }
             if (heroHeight <= 0) {
                 heroHeight = 0;
             }
         } else {
 
-            if(Gdx.input.isTouched()){
-                playerScore++;
-                gameStatus = 1;
-
+            if(Gdx.input.justTouched()){
+                gameStatus = true;
             }
-            //TODO
-            if (enemyHeight == heroHeight && heroWidth == enemyWidth) {
-                    gameStatus = 2;
-
-                }
         }
 
-        font.draw(batch, String.valueOf(playerScore), 125, 1000);
-        batch.draw(drake[drakeState], Gdx.graphics.getWidth() / 10 + 700, Gdx.graphics.getHeight() / 10 + 300);
-        batch.draw(enemy[enemyState], enemyWidth, enemyHeight);
-        batch.draw(hero[heroState],Gdx.graphics.getWidth() / 2 - hero[heroState].getWidth() / 2 - 450, heroHeight + 80);
+       // if(heroCollision.intersect(enemyCollision) || heroCollision.intersects(beeColission)){
+         //   gameStatus = false;
+           // Gdx.app.log("collision", "collision detected!");
+        //}
+
+
+
+        font_score.draw(batch, String.valueOf(playerScore), 750 , 1000);
+        batch.draw(drake[drakeFrame], Gdx.graphics.getWidth() / 10 + 850, Gdx.graphics.getHeight() / 10 + 300);
+        batch.draw(enemy[enemyFrame], enemyWidth, enemyHeight);
+        batch.draw(hero[heroFrame],Gdx.graphics.getWidth() / 2 - hero[heroFrame].getWidth() / 2 - 850, heroHeight + 80);
+        batch.draw(bee[beeFrame], beeWidth, beeHeight);
 
         batch.end();
     }
